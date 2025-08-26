@@ -3,11 +3,9 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { 
-  User, 
-  Plus
+  User
 } from "lucide-react";
 import { useRouter } from 'next/navigation';
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useLoadingStore } from "@/store/useLoadingStore";
 
 const Header = () => {

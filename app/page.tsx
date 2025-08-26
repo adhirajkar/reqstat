@@ -26,7 +26,7 @@ export default function Home() {
           Send requests, inspect responses, and debug APIs without the clutter.
         </p>
         <p className="text-lg text-slate-500 mb-12 max-w-2xl mx-auto">
-          Built for speed, clarity, and control - the developer's choice for API testing
+          Built for speed, clarity, and control - the developer&apos;s choice for API testing
         </p>
         
         <div className="flex flex-wrap justify-center gap-6 mb-12">

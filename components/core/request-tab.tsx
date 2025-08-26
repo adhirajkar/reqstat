@@ -182,7 +182,7 @@ const RequestTab = () => {
       
       <TabsContent value="body" className="mt-4">
         <div className="space-y-4">
-          <Select value={bodyType} onValueChange={(value: any) => setBodyType(value)}>
+          <Select value={bodyType} onValueChange={(value: 'none' | 'json' | 'form-data') => setBodyType(value)}>
             <SelectTrigger className="w-[200px]">
               <SelectValue placeholder="Select body type" />
             </SelectTrigger>

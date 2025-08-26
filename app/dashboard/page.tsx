@@ -72,7 +72,7 @@ const Dashboard = () => {
     setCookies(null);
     
     try {
-      let requestUrl = urlWithParams;
+      const requestUrl = urlWithParams;
       
       const requestHeaders: Record<string, string> = {};
       reqHeaders.filter(h => h.enabled && h.key).forEach(header => {
@@ -112,12 +112,14 @@ const Dashboard = () => {
       setCookies(response.data.cookies || {});
       setStatus(response.data.status);
       
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.log('error>>>', err);
       
-      if (err.response?.data) {
-        const errorData = err.response.data;
-        setStatus(errorData.status || err.response.status);
+      const axiosError = err as { response?: { data?: { status?: number; headers?: Record<string, string>; cookies?: Record<string, string>; error?: string; data?: unknown }; status?: number }; message?: string };
+      
+      if (axiosError.response?.data) {
+        const errorData = axiosError.response.data;
+        setStatus(errorData.status || axiosError.response.status || 0);
         setHeaders(errorData.headers || {});
         setCookies(errorData.cookies || {});
         setData(errorData.error || errorData.data || 'Request failed');
@@ -125,7 +127,7 @@ const Dashboard = () => {
         setStatus(0);
         setHeaders({});
         setCookies({});
-        setData(err.message || 'Network error occurred');
+        setData(axiosError.message || 'Network error occurred');
       }
       
     } finally {

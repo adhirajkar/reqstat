@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
     try {
       const urlObj = new URL(url);
       normalizedUrl = urlObj.toString();
-    } catch (urlError) {
+    } catch {
       try {
         const urlObj = new URL(`https://${url}`);
         normalizedUrl = urlObj.toString();
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     let statusCode = 500;
     
     if (error instanceof TypeError && error.message.includes('fetch failed')) {
-      const cause = (error as any).cause;
+      const cause = (error as Error & { cause?: { code?: string; hostname?: string } }).cause;
       if (cause?.code === 'ENOTFOUND') {
         errorMessage = `Domain not found: ${cause.hostname}. Please check the URL is correct.`;
         statusCode = 404;

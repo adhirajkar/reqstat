@@ -15,7 +15,7 @@ const ResponseTab = memo(() => {
   const isJson = useMemo(() => contentType.includes('application/json'), [contentType]);
   const isHtml = useMemo(() => contentType.includes('text/html'), [contentType]);
   
-  const renderBody = useMemo(() => () => {
+  const renderBody = () => {
     if (isJson) {
       return <JsonViewer value={data} />;
     } else if (isHtml) {
@@ -36,7 +36,7 @@ const ResponseTab = memo(() => {
     } else {
       return <pre className="whitespace-pre-wrap font-mono text-sm">{data}</pre>;
     }
-  }, [data, isJson, isHtml]);
+  };
   
   return (<>
   <div>
