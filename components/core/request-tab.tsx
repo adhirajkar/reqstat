@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Plus, Trash2 } from "lucide-react"
+import { Plus, Trash2, Settings, FileJson, Database, Sparkles } from "lucide-react"
 import { useReqStore } from '@/store/useReqStore'
 import {
   Select,
@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { toast } from "sonner"
 
 const RequestTab = () => {
   const { 
@@ -68,112 +69,192 @@ const RequestTab = () => {
   const enabledParamsCount = params.filter(p => p.enabled && p.key).length
   const enabledHeadersCount = headers.filter(h => h.enabled && h.key).length
 
+  const clearAllParams = () => {
+    setParams([])
+    toast.success('All parameters cleared')
+  }
+
+  const clearAllHeaders = () => {
+    setHeaders([])
+    toast.success('All headers cleared')
+  }
+
+  const clearAllFormData = () => {
+    setFormDataFields([])
+    toast.success('All form fields cleared')
+  }
+
+  const formatJson = () => {
+    try {
+      const parsed = JSON.parse(jsonBody)
+      setJsonBody(JSON.stringify(parsed, null, 2))
+      toast.success('JSON formatted')
+    } catch {
+      toast.error('Invalid JSON')
+    }
+  }
+
   return (
     <Tabs defaultValue="params" className="w-full">
       <TabsList className="grid w-full grid-cols-3">
-        <TabsTrigger className='cursor-pointer' value="params">
+        <TabsTrigger className='cursor-pointer flex items-center gap-2' value="params">
+          <Settings className="h-4 w-4" />
           Params
           {enabledParamsCount > 0 && (
             <Badge
-              className="ml-2 h-5 min-w-5 rounded-full px-1 font-mono tabular-nums"
-              variant="outline"
+              className="ml-1 h-5 min-w-5 rounded-full px-1.5 font-mono tabular-nums"
+              variant="secondary"
             >
               {enabledParamsCount}
             </Badge>
           )}
         </TabsTrigger>
-        <TabsTrigger className='cursor-pointer' value="headers">
+        <TabsTrigger className='cursor-pointer flex items-center gap-2' value="headers">
+          <Database className="h-4 w-4" />
           Headers
           {enabledHeadersCount > 0 && (
             <Badge
-              className="ml-2 h-5 min-w-5 rounded-full px-1 font-mono tabular-nums"
-              variant="outline"
+              className="ml-1 h-5 min-w-5 rounded-full px-1.5 font-mono tabular-nums"
+              variant="secondary"
             >
               {enabledHeadersCount}
             </Badge>
           )}
         </TabsTrigger>
-        <TabsTrigger className='cursor-pointer' value="body">Body</TabsTrigger>
+        <TabsTrigger className='cursor-pointer flex items-center gap-2' value="body">
+          <FileJson className="h-4 w-4" />
+          Body
+        </TabsTrigger>
       </TabsList>
       
-      <TabsContent value="params" className="mt-4 space-y-2">
-        {params.map((param, index) => (
-          <div key={index} className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={param.enabled}
-              onChange={(e) => updateParam(index, 'enabled', e.target.checked)}
-              className="w-4 h-4"
-            />
-            <Input
-              placeholder="Key"
-              value={param.key}
-              onChange={(e) => updateParam(index, 'key', e.target.value)}
-              className="flex-1"
-            />
-            <Input
-              placeholder="Value"
-              value={param.value}
-              onChange={(e) => updateParam(index, 'value', e.target.value)}
-              className="flex-1"
-            />
+      <TabsContent value="params" className="mt-4 space-y-3">
+        {params.length > 0 && (
+          <div className="flex items-center justify-between pb-2 border-b">
+            <p className="text-sm text-muted-foreground">
+              {params.length} parameter{params.length !== 1 ? 's' : ''} • {enabledParamsCount} enabled
+            </p>
             <Button
               variant="ghost"
-              size="icon"
-              onClick={() => deleteParam(index)}
-              className="h-8 w-8"
+              size="sm"
+              onClick={clearAllParams}
+              className="h-7 text-xs text-destructive hover:text-destructive"
             >
-              <Trash2 className="h-4 w-4" />
+              Clear All
             </Button>
           </div>
-        ))}
+        )}
+        {params.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <Settings className="h-12 w-12 text-muted-foreground/50 mb-3" />
+            <p className="text-sm text-muted-foreground mb-1">No query parameters yet</p>
+            <p className="text-xs text-muted-foreground/70">Add parameters to append to your URL</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {params.map((param, index) => (
+              <div key={index} className="flex items-center gap-2 group">
+                <input
+                  type="checkbox"
+                  checked={param.enabled}
+                  onChange={(e) => updateParam(index, 'enabled', e.target.checked)}
+                  className="w-4 h-4 rounded border-input cursor-pointer"
+                />
+                <Input
+                  placeholder="Key"
+                  value={param.key}
+                  onChange={(e) => updateParam(index, 'key', e.target.value)}
+                  className="flex-1"
+                />
+                <Input
+                  placeholder="Value"
+                  value={param.value}
+                  onChange={(e) => updateParam(index, 'value', e.target.value)}
+                  className="flex-1"
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => deleteParam(index)}
+                  className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
         <Button
           variant="outline"
           size="sm"
           onClick={addParam}
-          className="w-full"
+          className="w-full mt-3"
         >
           <Plus className="h-4 w-4 mr-2" />
           Add Parameter
         </Button>
       </TabsContent>
       
-      <TabsContent value="headers" className="mt-4 space-y-2">
-        {headers.map((header, index) => (
-          <div key={index} className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={header.enabled}
-              onChange={(e) => updateHeader(index, 'enabled', e.target.checked)}
-              className="w-4 h-4"
-            />
-            <Input
-              placeholder="Key"
-              value={header.key}
-              onChange={(e) => updateHeader(index, 'key', e.target.value)}
-              className="flex-1"
-            />
-            <Input
-              placeholder="Value"
-              value={header.value}
-              onChange={(e) => updateHeader(index, 'value', e.target.value)}
-              className="flex-1"
-            />
+      <TabsContent value="headers" className="mt-4 space-y-3">
+        {headers.length > 0 && (
+          <div className="flex items-center justify-between pb-2 border-b">
+            <p className="text-sm text-muted-foreground">
+              {headers.length} header{headers.length !== 1 ? 's' : ''} • {enabledHeadersCount} enabled
+            </p>
             <Button
               variant="ghost"
-              size="icon"
-              onClick={() => deleteHeader(index)}
-              className="h-8 w-8"
+              size="sm"
+              onClick={clearAllHeaders}
+              className="h-7 text-xs text-destructive hover:text-destructive"
             >
-              <Trash2 className="h-4 w-4" />
+              Clear All
             </Button>
           </div>
-        ))}
+        )}
+        {headers.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <Database className="h-12 w-12 text-muted-foreground/50 mb-3" />
+            <p className="text-sm text-muted-foreground mb-1">No headers yet</p>
+            <p className="text-xs text-muted-foreground/70">Add custom headers to your request</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {headers.map((header, index) => (
+              <div key={index} className="flex items-center gap-2 group">
+                <input
+                  type="checkbox"
+                  checked={header.enabled}
+                  onChange={(e) => updateHeader(index, 'enabled', e.target.checked)}
+                  className="w-4 h-4 rounded border-input cursor-pointer"
+                />
+                <Input
+                  placeholder="Key"
+                  value={header.key}
+                  onChange={(e) => updateHeader(index, 'key', e.target.value)}
+                  className="flex-1"
+                />
+                <Input
+                  placeholder="Value"
+                  value={header.value}
+                  onChange={(e) => updateHeader(index, 'value', e.target.value)}
+                  className="flex-1"
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => deleteHeader(index)}
+                  className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
         <Button
           variant="outline"
           size="sm"
           onClick={addHeader}
-          className="w-full"
+          className="w-full mt-3"
         >
           <Plus className="h-4 w-4 mr-2" />
           Add Header
@@ -182,63 +263,111 @@ const RequestTab = () => {
       
       <TabsContent value="body" className="mt-4">
         <div className="space-y-4">
-          <Select value={bodyType} onValueChange={(value: 'none' | 'json' | 'form-data') => setBodyType(value)}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Select body type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">None</SelectItem>
-              <SelectItem value="json">JSON</SelectItem>
-              <SelectItem value="form-data">Form Data</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          {bodyType === 'json' && (
-            <Textarea
-              placeholder="Enter JSON body"
-              value={jsonBody}
-              onChange={(e) => setJsonBody(e.target.value)}
-              className="min-h-[120px] font-mono text-sm"
-            />
+          <div className="flex items-center justify-between">
+            <Select value={bodyType} onValueChange={(value: 'none' | 'json' | 'form-data') => setBodyType(value)}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Select body type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
+                <SelectItem value="json">JSON</SelectItem>
+                <SelectItem value="form-data">Form Data</SelectItem>
+              </SelectContent>
+            </Select>
+            {bodyType === 'json' && jsonBody && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={formatJson}
+                className="h-8"
+              >
+                <Sparkles className="h-3.5 w-3.5 mr-2" />
+                Format JSON
+              </Button>
+            )}
+          </div>
+
+          {bodyType === 'none' && (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <FileJson className="h-12 w-12 text-muted-foreground/50 mb-3" />
+              <p className="text-sm text-muted-foreground mb-1">No request body</p>
+              <p className="text-xs text-muted-foreground/70">Select a body type to add data</p>
+            </div>
           )}
-          
-          {bodyType === 'form-data' && (
+
+          {bodyType === 'json' && (
             <div className="space-y-2">
-              {formDataFields.map((field, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={field.enabled}
-                    onChange={(e) => updateFormDataField(index, 'enabled', e.target.checked)}
-                    className="w-4 h-4"
-                  />
-                  <Input
-                    placeholder="Key"
-                    value={field.key}
-                    onChange={(e) => updateFormDataField(index, 'key', e.target.value)}
-                    className="flex-1"
-                  />
-                  <Input
-                    placeholder="Value"
-                    value={field.value}
-                    onChange={(e) => updateFormDataField(index, 'value', e.target.value)}
-                    className="flex-1"
-                  />
+              <Textarea
+                placeholder='{\n  "key": "value"\n}'
+                value={jsonBody}
+                onChange={(e) => setJsonBody(e.target.value)}
+                className="min-h-[200px] font-mono text-sm"
+              />
+            </div>
+          )}
+
+          {bodyType === 'form-data' && (
+            <div className="space-y-3">
+              {formDataFields.length > 0 && (
+                <div className="flex items-center justify-between pb-2 border-b">
+                  <p className="text-sm text-muted-foreground">
+                    {formDataFields.length} field{formDataFields.length !== 1 ? 's' : ''}
+                  </p>
                   <Button
                     variant="ghost"
-                    size="icon"
-                    onClick={() => deleteFormDataField(index)}
-                    className="h-8 w-8"
+                    size="sm"
+                    onClick={clearAllFormData}
+                    className="h-7 text-xs text-destructive hover:text-destructive"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    Clear All
                   </Button>
                 </div>
-              ))}
+              )}
+              {formDataFields.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <Database className="h-12 w-12 text-muted-foreground/50 mb-3" />
+                  <p className="text-sm text-muted-foreground mb-1">No form fields yet</p>
+                  <p className="text-xs text-muted-foreground/70">Add fields to send as form data</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {formDataFields.map((field, index) => (
+                    <div key={index} className="flex items-center gap-2 group">
+                      <input
+                        type="checkbox"
+                        checked={field.enabled}
+                        onChange={(e) => updateFormDataField(index, 'enabled', e.target.checked)}
+                        className="w-4 h-4 rounded border-input cursor-pointer"
+                      />
+                      <Input
+                        placeholder="Key"
+                        value={field.key}
+                        onChange={(e) => updateFormDataField(index, 'key', e.target.value)}
+                        className="flex-1"
+                      />
+                      <Input
+                        placeholder="Value"
+                        value={field.value}
+                        onChange={(e) => updateFormDataField(index, 'value', e.target.value)}
+                        className="flex-1"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => deleteFormDataField(index)}
+                        className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
               <Button
                 variant="outline"
                 size="sm"
                 onClick={addFormDataField}
-                className="w-full"
+                className="w-full mt-3"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Field

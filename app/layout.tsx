@@ -27,7 +27,8 @@ export default function RootLayout({
   return (
     <html
     suppressHydrationWarning={true}
-    lang="en">
+    lang="en"
+    className="light">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning={true}
@@ -37,6 +38,8 @@ export default function RootLayout({
           defaultTheme="light"
           enableSystem={false}
           disableTransitionOnChange
+          storageKey="reqstat-theme"
+          forcedTheme={undefined}
         >
           {children}
           <Toaster />

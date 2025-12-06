@@ -2,11 +2,12 @@
 'use client'
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { 
+import {
   User
 } from "lucide-react";
 import { useRouter } from 'next/navigation';
 import { useLoadingStore } from "@/store/useLoadingStore";
+import { toast } from "sonner";
 
 const Header = () => {
   const router = useRouter();
@@ -20,7 +21,10 @@ const Header = () => {
           <div className="w-8 h-8 bg-gradient-to-r from-slate-900 via-slate-700 to-slate-500 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-sm">R</span>
           </div>
-          <h1 className="text-xl font-bold bg-gradient-to-r from-slate-900 via-slate-700 to-slate-500 bg-clip-text text-transparent">REQStat</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold bg-gradient-to-r from-slate-900 via-slate-700 to-slate-500 bg-clip-text text-transparent">REQStat</h1>
+            <span className="text-[10px] font-semibold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">v1.1</span>
+          </div>
         </div>
       </div>
 
@@ -38,10 +42,11 @@ const Header = () => {
 
         {/* Login Button */}
       
-      <Button 
+      <Button
           variant="gradient"
-          size="sm" 
+          size="sm"
           className="font-medium"
+          onClick={() => toast.info("Coming soon!")}
         >
           <User className="w-4 h-4 mr-2" />
           Login
