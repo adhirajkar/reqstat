@@ -22,7 +22,7 @@ export default function Home() {
           <h1 className={cn("md:text-7xl text-4xl font-black tracking-tight bg-gradient-to-r from-slate-900 via-slate-700 to-slate-500 bg-clip-text text-transparent")} style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
             REQStat
           </h1>
-          <span className="text-sm md:text-base font-semibold text-slate-400 bg-white/80 border border-slate-200 px-2 py-1 rounded backdrop-blur-sm">v1.1</span>
+          <span className="text-sm md:text-base font-semibold text-slate-400 bg-white/80 border border-slate-200 px-2 py-1 rounded backdrop-blur-sm">v1.2</span>
         </div>
         
         <p className="text-xl md:text-2xl text-slate-700 mb-4 leading-relaxed max-w-3xl">

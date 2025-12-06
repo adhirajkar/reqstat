@@ -23,7 +23,7 @@ const Header = () => {
           </div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold bg-gradient-to-r from-slate-900 via-slate-700 to-slate-500 bg-clip-text text-transparent">REQStat</h1>
-            <span className="text-[10px] font-semibold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">v1.1</span>
+            <span className="text-[10px] font-semibold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">v1.2</span>
           </div>
         </div>
       </div>
