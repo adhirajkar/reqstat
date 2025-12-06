@@ -139,7 +139,7 @@ const Dashboard = () => {
   return (
     <div className="min-h-[calc(100vh-3.5rem)] bg-gradient-to-br from-slate-50 to-slate-100 px-4 py-2 md:px-8 md:py-4">
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="bg-card rounded-lg">
+        <div className="rounded-lg">
           <div className="flex flex-col sm:flex-row gap-4">
             <Select value={method} onValueChange={(value) => setMethod(value)}>
               <SelectTrigger className={`w-full sm:w-[120px] bg-background border-input text-foreground hover:bg-accent hover:text-accent-foreground transition-colors font-semibold ${
