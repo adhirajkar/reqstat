@@ -20,14 +20,14 @@ import { useReqStore } from "@/store/useReqStore";
 import { validateUrl } from "@/lib/helper";
 import { useLoadingStore } from "@/store/useLoadingStore";
 import { httpStatusMap } from "@/lib/status-codes";
-import { Send } from "lucide-react";
+import { Send, X, Lock } from "lucide-react";
 
 const Dashboard = () => {
   const [disabled, setDisabled] = useState<boolean>(false);
   const [method, setMethod] = useState<string>("");
   const [url, setUrl] = useState<string>("");
   
-  const { setData, setHeaders, setCookies, setStatus, status } = useResStore();
+  const { setData, setHeaders, setCookies, setStatus, status, setDuration, setSize, duration, size } = useResStore();
   const { params, headers: reqHeaders, bodyType, jsonBody, formDataFields } = useReqStore();
   const { setIsLoading } = useLoadingStore();
 
@@ -61,16 +61,25 @@ const Dashboard = () => {
     return method.trim() !== "" && isValidUrl;
   }, [method, isValidUrl]);
 
+
+  const clearUrl = () => {
+    setUrl('');
+  };
+
   const handleRequest = async () => {
     if (!isFormValid) return;
-    
+
     setDisabled(true);
     setIsLoading(true);
     setStatus(0);
     setData(null);
     setHeaders(null);
     setCookies(null);
-    
+    setDuration(null);
+    setSize(null);
+
+    const startTime = performance.now();
+
     try {
       const requestUrl = urlWithParams;
       
@@ -106,28 +115,60 @@ const Dashboard = () => {
         headers: requestHeaders,
         body: parsedBody
       });
+
+      const endTime = performance.now();
+      const duration = Math.round(endTime - startTime);
+
+      // Calculate response size
+      const responseData = response.data.data;
+      const responseSize = new Blob([
+        typeof responseData === 'string'
+          ? responseData
+          : JSON.stringify(responseData)
+      ]).size;
+
       console.log(response.data);
-      setData(response.data.data);
+      setData(responseData);
       setHeaders(response.data.headers);
       setCookies(response.data.cookies || {});
       setStatus(response.data.status);
+      setDuration(duration);
+      setSize(responseSize);
       
     } catch (err: unknown) {
       console.log('error>>>', err);
-      
+
+      const endTime = performance.now();
+      const duration = Math.round(endTime - startTime);
+      setDuration(duration);
+
       const axiosError = err as { response?: { data?: { status?: number; headers?: Record<string, string>; cookies?: Record<string, string>; error?: string; data?: unknown }; status?: number }; message?: string };
-      
+
       if (axiosError.response?.data) {
         const errorData = axiosError.response.data;
         setStatus(errorData.status || axiosError.response.status || 0);
         setHeaders(errorData.headers || {});
         setCookies(errorData.cookies || {});
-        setData(errorData.error || errorData.data || 'Request failed');
+        const errorMessage = errorData.error || errorData.data || 'Request failed';
+        setData(errorMessage);
+
+        // Calculate error response size
+        const errorSize = new Blob([
+          typeof errorMessage === 'string'
+            ? errorMessage
+            : JSON.stringify(errorMessage)
+        ]).size;
+        setSize(errorSize);
       } else {
         setStatus(0);
         setHeaders({});
         setCookies({});
-        setData(axiosError.message || 'Network error occurred');
+        const errorMessage = axiosError.message || 'Network error occurred';
+        setData(errorMessage);
+
+        // Calculate error response size
+        const errorSize = new Blob([errorMessage]).size;
+        setSize(errorSize);
       }
       
     } finally {
@@ -139,75 +180,79 @@ const Dashboard = () => {
   return (
     <div className="min-h-[calc(100vh-3.5rem)] bg-gradient-to-br from-slate-50 to-slate-100 px-4 py-2 md:px-8 md:py-4">
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="rounded-lg">
-          <div className="flex flex-col sm:flex-row gap-4">
+        <div className="bg-card rounded-lg border shadow-sm p-4 mb-8">
+          <div className="flex flex-col lg:flex-row gap-3 items-stretch">
             <Select value={method} onValueChange={(value) => setMethod(value)}>
-              <SelectTrigger className={`w-full sm:w-[120px] bg-background border-input text-foreground hover:bg-accent hover:text-accent-foreground transition-colors font-semibold ${
-                !method ? 'border-red-300' : ''
+              <SelectTrigger className={`w-full lg:w-[130px] min-h-[44px] bg-background border-2 transition-all duration-200 font-semibold ${
+                !method ? 'border-red-300 text-muted-foreground' : 'border-input'
               }`}>
-                <SelectValue placeholder="Method" className="text-foreground" />
+                <SelectValue placeholder="Method" />
               </SelectTrigger>
-              <SelectContent className="bg-popover border-border">
-                <SelectGroup className="font-semibold">
-                  <SelectItem
-                    value="GET"
-                    className="text-popover-foreground hover:bg-accent hover:text-accent-foreground"
-                  >
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value="GET" className="font-medium cursor-pointer">
                     GET
                   </SelectItem>
-                  <SelectItem
-                    value="POST"
-                    className="text-popover-foreground hover:bg-accent hover:text-accent-foreground"
-                  >
+                  <SelectItem value="POST" className="font-medium cursor-pointer">
                     POST
                   </SelectItem>
-                  <SelectItem
-                    value="PUT"
-                    className="text-popover-foreground hover:bg-accent hover:text-accent-foreground"
-                  >
+                  <SelectItem value="PUT" className="font-medium cursor-pointer">
                     PUT
                   </SelectItem>
-                  <SelectItem
-                    value="DELETE"
-                    className="text-popover-foreground hover:bg-accent hover:text-accent-foreground"
-                  >
+                  <SelectItem value="DELETE" className="font-medium cursor-pointer">
                     DELETE
                   </SelectItem>
-                  <SelectItem
-                    value="PATCH"
-                    className="text-popover-foreground hover:bg-accent hover:text-accent-foreground"
-                  >
+                  <SelectItem value="PATCH" className="font-medium cursor-pointer">
                     PATCH
                   </SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
             <div className="flex-1 relative">
-              <Input
-                placeholder="Enter URL (e.g., https://api.github.com/users, localhost:3000)"
-                type="text"
-                className={`bg-background border-input text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-transparent ${
-                  url && !isValidUrl ? 'border-red-300 focus:border-red-300' : ''
-                }`}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleRequest();
-                  }
-                }}
-                value={urlWithParams}
-                onChange={(e) => {
-                  const newValue = e.target.value;
-                  const questionMarkIndex = newValue.indexOf('?');
-                  if (questionMarkIndex !== -1) {
-                    setUrl(newValue.substring(0, questionMarkIndex));
-                  } else {
-                    setUrl(newValue);
-                  }
-                }}
-              />
+              <div className="relative">
+                {urlWithParams.startsWith('https://') && (
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-600" />
+                )}
+                <Input
+                  placeholder="Enter URL (e.g., https://api.github.com/users)"
+                  type="text"
+                  className={`min-h-[44px] ${urlWithParams.startsWith('https://') ? 'pl-10' : ''} ${url ? 'pr-10' : ''} bg-background border-2 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-primary transition-all ${
+                    url && !isValidUrl ? 'border-red-300 focus:border-red-400 focus:ring-red-200' : 'border-input'
+                  }`}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleRequest();
+                    }
+                  }}
+                  value={urlWithParams}
+                  onChange={(e) => {
+                    const newValue = e.target.value;
+                    const questionMarkIndex = newValue.indexOf('?');
+                    if (questionMarkIndex !== -1) {
+                      setUrl(newValue.substring(0, questionMarkIndex));
+                    } else {
+                      setUrl(newValue);
+                    }
+                  }}
+                />
+                {url && (
+                  <button
+                    onClick={clearUrl}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
               {url && !isValidUrl && (
-                <p className="absolute -bottom-5 left-0 text-xs text-red-500">
-                  Enter a valid URL with domain (e.g., example.com, localhost:3000)
+                <p className="mt-1.5 text-xs text-red-500 flex items-center gap-1">
+                  <span className="inline-block w-1 h-1 rounded-full bg-red-500"></span>
+                  Enter a valid URL with domain
+                </p>
+              )}
+              {isValidUrl && (
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  Press <kbd className="px-1 py-0.5 text-xs font-semibold bg-muted border rounded">Enter</kbd> to send
                 </p>
               )}
             </div>
@@ -215,15 +260,44 @@ const Dashboard = () => {
               variant="gradient"
               onClick={handleRequest}
               disabled={disabled || !isFormValid}
-              className={`transition-all duration-200 ${
-                !isFormValid 
-                  ? 'opacity-50 cursor-not-allowed' 
-                  : 'hover:opacity-90'
+              className={`w-full lg:w-auto min-h-[44px] px-6 font-semibold whitespace-nowrap ${
+                !isFormValid
+                  ? 'opacity-40 cursor-not-allowed'
+                  : disabled
+                  ? 'opacity-70'
+                  : 'hover:scale-105'
               }`}
             >
-              Send
-              <Send className={disabled ? 'animate-spin' : ''} />
+              {disabled ? (
+                <div className="flex items-center gap-2 relative">
+                  <span>Sending</span>
+                  <Send className="h-4 w-4 animate-[fly_1s_ease-in-out_infinite]" style={{
+                    animation: 'fly 1s ease-in-out infinite',
+                  }} />
+                </div>
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-2" />
+                  Send
+                </>
+              )}
             </Button>
+            <style jsx>{`
+              @keyframes fly {
+                0% {
+                  transform: translateX(-20px);
+                  opacity: 0.3;
+                }
+                50% {
+                  transform: translateX(10px);
+                  opacity: 1;
+                }
+                100% {
+                  transform: translateX(-20px);
+                  opacity: 0.3;
+                }
+              }
+            `}</style>
           </div>
         </div>
 
@@ -247,9 +321,21 @@ const Dashboard = () => {
                 <div className="p-4 border-b flex items-center justify-between h-[53px]">
                   <h2 className="text-sm font-semibold uppercase">Response</h2>
                   {status !== 0 && (
-                    <Badge className={`${httpStatusMap[status].color} font-medium`}>
-                      {status} {httpStatusMap[status].message}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge className={`${httpStatusMap[status].color} font-medium`}>
+                        {status} {httpStatusMap[status].message}
+                      </Badge>
+                      {duration !== null && (
+                        <Badge variant="secondary" className="font-mono text-xs">
+                          {duration}ms
+                        </Badge>
+                      )}
+                      {size !== null && (
+                        <Badge variant="secondary" className="font-mono text-xs">
+                          {size < 1024 ? `${size}B` : size < 1024 * 1024 ? `${(size / 1024).toFixed(2)}KB` : `${(size / (1024 * 1024)).toFixed(2)}MB`}
+                        </Badge>
+                      )}
+                    </div>
                   )}
                 </div>
                 <div className="flex-1 p-4 overflow-y-auto">
