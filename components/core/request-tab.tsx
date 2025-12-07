@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Plus, Trash2, Settings, FileJson, Database, Sparkles } from "lucide-react"
+import { Plus, Trash2, Settings, FileJson, Database, Sparkles, Upload, X } from "lucide-react"
 import { useReqStore } from '@/store/useReqStore'
 import {
   Select,
@@ -53,12 +53,24 @@ const RequestTab = () => {
   }
 
   const addFormDataField = () => {
-    setFormDataFields([...formDataFields, { key: '', value: '', enabled: true }])
+    setFormDataFields([...formDataFields, { key: '', value: '', enabled: true, type: 'text', file: null }])
   }
 
-  const updateFormDataField = (index: number, field: 'key' | 'value' | 'enabled', value: string | boolean) => {
+  const updateFormDataField = (index: number, field: 'key' | 'value' | 'enabled' | 'type', value: string | boolean | 'text' | 'file') => {
     const newFields = [...formDataFields]
-    newFields[index] = { ...newFields[index], [field]: value }
+    if (field === 'type' && value === 'file') {
+      newFields[index] = { ...newFields[index], [field]: value, value: '', file: null }
+    } else if (field === 'type' && value === 'text') {
+      newFields[index] = { ...newFields[index], [field]: value, file: null }
+    } else {
+      newFields[index] = { ...newFields[index], [field]: value }
+    }
+    setFormDataFields(newFields)
+  }
+
+  const updateFormDataFile = (index: number, file: File | null) => {
+    const newFields = [...formDataFields]
+    newFields[index] = { ...newFields[index], file, value: file?.name || '' }
     setFormDataFields(newFields)
   }
 
@@ -345,12 +357,51 @@ const RequestTab = () => {
                         onChange={(e) => updateFormDataField(index, 'key', e.target.value)}
                         className="flex-1"
                       />
-                      <Input
-                        placeholder="Value"
-                        value={field.value}
-                        onChange={(e) => updateFormDataField(index, 'value', e.target.value)}
-                        className="flex-1"
-                      />
+                      {field.type === 'text' ? (
+                        <Input
+                          placeholder="Value"
+                          value={field.value}
+                          onChange={(e) => updateFormDataField(index, 'value', e.target.value)}
+                          className="flex-1"
+                        />
+                      ) : (
+                        <div className="flex-1 flex items-center gap-2">
+                          <div className="flex-1 relative">
+                            <Input
+                              type="file"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0] || null
+                                updateFormDataFile(index, file)
+                              }}
+                              className="cursor-pointer"
+                            />
+                          </div>
+                          {field.file && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => updateFormDataFile(index, null)}
+                              className="h-8 w-8"
+                              title="Clear file"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                      <Select
+                        value={field.type}
+                        onValueChange={(value: 'text' | 'file') => updateFormDataField(index, 'type', value)}
+                      >
+                        <SelectTrigger className="w-[100px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="text">Text</SelectItem>
+                          <SelectItem value="file">File</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <Button
                         variant="ghost"
                         size="icon"

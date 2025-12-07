@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const { url, method = 'GET', headers = {}, body } = await request.json();
+    const requestData = await request.json();
+    const { url, method = 'GET', headers = {}, body } = requestData;
 
     let normalizedUrl: string;
     try {
@@ -22,13 +23,44 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    let fetchBody: BodyInit | undefined;
+    const fetchHeaders: Record<string, string> = {
+      ...headers,
+      'User-Agent': 'Req-Stat/1.2',
+    };
+
+    // Handle body based on type
+    if (body && typeof body === 'object' && '__formData' in body) {
+      // Handle file uploads - convert base64 back to FormData
+      const formData = new FormData();
+      const fields = body.__formData as Array<{ key: string; value: string; type: 'text' | 'file'; fileName?: string; fileType?: string }>;
+
+      for (const field of fields) {
+        if (field.type === 'file') {
+          // Convert base64 back to Blob
+          const binaryString = atob(field.value);
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+          const blob = new Blob([bytes], { type: field.fileType || 'application/octet-stream' });
+          formData.append(field.key, blob, field.fileName || 'file');
+        } else {
+          formData.append(field.key, field.value);
+        }
+      }
+
+      fetchBody = formData;
+      // Don't set Content-Type for FormData - let fetch handle it
+      delete fetchHeaders['Content-Type'];
+    } else if (body) {
+      fetchBody = JSON.stringify(body);
+    }
+
     const response = await fetch(normalizedUrl, {
       method,
-      headers: {
-        ...headers,
-        'User-Agent': 'Req-Stat/1.0',
-      },
-      body: body ? JSON.stringify(body) : undefined,
+      headers: fetchHeaders,
+      body: fetchBody,
       signal: AbortSignal.timeout(30000),
     });
 
