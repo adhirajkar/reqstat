@@ -97,18 +97,57 @@ const Dashboard = () => {
             parsedBody = jsonBody;
           }
         } else if (bodyType === 'form-data') {
-          const formData: Record<string, string> = {};
-          formDataFields.filter(f => f.enabled && f.key).forEach(field => {
-            formData[field.key] = field.value;
-          });
-          parsedBody = formData;
-          
-          if (!requestHeaders['Content-Type']) {
-            requestHeaders['Content-Type'] = 'application/x-www-form-urlencoded';
+          const hasFiles = formDataFields.some(f => f.enabled && f.type === 'file' && f.file);
+
+          if (hasFiles) {
+            // Convert files to base64 for transmission through proxy
+            const formDataWithFiles: Array<{ key: string; value: string; type: 'text' | 'file'; fileName?: string; fileType?: string }> = [];
+
+            for (const field of formDataFields.filter(f => f.enabled && f.key)) {
+              if (field.type === 'file' && field.file) {
+                // Convert file to base64
+                const base64 = await new Promise<string>((resolve) => {
+                  const reader = new FileReader();
+                  reader.onloadend = () => {
+                    const base64String = reader.result as string;
+                    resolve(base64String.split(',')[1]); // Remove data:mime;base64, prefix
+                  };
+                  reader.readAsDataURL(field.file!);
+                });
+
+                formDataWithFiles.push({
+                  key: field.key,
+                  value: base64,
+                  type: 'file',
+                  fileName: field.file.name,
+                  fileType: field.file.type
+                });
+              } else {
+                formDataWithFiles.push({
+                  key: field.key,
+                  value: field.value,
+                  type: 'text'
+                });
+              }
+            }
+
+            parsedBody = { __formData: formDataWithFiles };
+            requestHeaders['Content-Type'] = 'multipart/form-data';
+          } else {
+            // Use regular object for non-file form data
+            const formData: Record<string, string> = {};
+            formDataFields.filter(f => f.enabled && f.key).forEach(field => {
+              formData[field.key] = field.value;
+            });
+            parsedBody = formData;
+
+            if (!requestHeaders['Content-Type']) {
+              requestHeaders['Content-Type'] = 'application/x-www-form-urlencoded';
+            }
           }
         }
       }
-      
+
       const response = await axios.post('/api/proxy', {
         method,
         url: requestUrl,

@@ -18,6 +18,8 @@ interface FormDataField {
   key: string;
   value: string;
   enabled: boolean;
+  type: 'text' | 'file';
+  file?: File | null;
 }
 
 interface RequestStore {
@@ -46,6 +48,6 @@ export const useReqStore = create<RequestStore>((set) => ({
   jsonBody: '',
   setJsonBody: (jsonBody) => set({ jsonBody }),
   
-  formDataFields: [{ key: '', value: '', enabled: true }],
+  formDataFields: [{ key: '', value: '', enabled: true, type: 'text', file: null }],
   setFormDataFields: (formDataFields) => set({ formDataFields }),
 }));
